@@ -31,7 +31,7 @@ export class NasaSearch extends LitElement {
       details {
         margin: 16px;
         padding: 16px;
-        background-color: blue;
+        background-color: lightblue;
       }
       summary {
         font-size: 24px;
@@ -69,6 +69,7 @@ export class NasaSearch extends LitElement {
       <nasa-image
         source="${item.links[0].href}"
         title="${item.data[0].title}"
+        secondary_creator="${item.data[0].secondary_creator}"
       ></nasa-image>
       `)}
     </div>
