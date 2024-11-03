@@ -1,12 +1,25 @@
 import { LitElement, html, css } from 'lit';
+import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 import "./nasa-image.js";
+
 export class NasaSearch extends LitElement {
+
+  constructor() {
+    super();
+    this.value = null;
+    this.title = '';
+    this.loading = false;
+    this.items = [];
+    this.jsonUrl = 'https://haxtheweb.org/site.json';
+  }
+
   static get properties() {
     return {
       title: { type: String },
       loading: { type: Boolean, reflect: true },
       items: { type: Array, },
       value: { type: String },
+      jsonUrl: { type: String },
     };
   }
 
@@ -15,10 +28,11 @@ export class NasaSearch extends LitElement {
       :host {
         display: block;
       }
+
       :host([loading]) .results {
         opacity: 0.1;
-        visibility: hidden;
-        height: 1px;
+        display: none;
+        display: block;
       }
       .results {
         visibility: visible;
@@ -47,32 +61,24 @@ export class NasaSearch extends LitElement {
     `;
   }
 
-  constructor() {
-    super();
-    this.value = null;
-    this.title = '';
-    this.loading = false;
-    this.items = [];
-  }
 
   render() {
     return html`
-    <h2>${this.title}</h2>
-    <details open>
-      <summary>Search inputs</summary>
+      <h2>${this.title}</h2>
+      <details open>
+        <summary>Search the HaxWeb!</summary>
       <div>
-        <input id="input" placeholder="Search NASA images" @input="${this.inputChanged}" />
+        <input id="input" placeholder="Search" @input="${this.inputChanged}" />
       </div>
-    </details>
-    <div class="results">
-      ${this.items.map((item, index) => html`
-      <nasa-image
-        source="${item.links[0].href}"
-        title="${item.data[0].title}"
-        secondary_creator="${item.data[0].secondary_creator}"
-      ></nasa-image>
-      `)}
-    </div>
+      </details>
+      <div class="results">
+        ${this.items.map((item, index) => html`
+          <nasa-image
+            title="${item.data?.[0]?.title || ''}"
+            logo="${item.links?.[0]?.href || ''}" 
+          ></nasa-image>
+        `)}
+      </div>
     `;
   }
 
@@ -96,13 +102,19 @@ export class NasaSearch extends LitElement {
 
   updateResults(value) {
     this.loading = true;
-    fetch(`https://images-api.nasa.gov/search?media_type=image&q=${value}`).then(d => d.ok ? d.json(): {}).then(data => {
-      if (data.collection) {
-        this.items = [];
-        this.items = data.collection.items;
+    fetch(this.jsonUrl) // Use the jsonUrl property
+      .then(response => response.ok ? response.json() : {})
+      .then(data => {
+        if (data && Array.isArray(data.items)) {
+          this.items = data.items.filter(item => 
+            item?.title?.toLowerCase().includes(value.toLowerCase()) ||
+            item?.description?.toLowerCase().includes(value.toLowerCase())
+          );
+        }
+
+        //this.updateGlobalHexColor(data);
         this.loading = false;
-      }  
-    });
+      });
   }
 
   static get tag() {
