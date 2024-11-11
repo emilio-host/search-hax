@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 
-export class NasaImage extends LitElement {
+export class NasaImage extends DDDSuper (LitElement) {
 
   constructor() {
     super();
@@ -10,6 +10,7 @@ export class NasaImage extends LitElement {
     this.created = '';
     this.lastUpdated = '';
     this.logo = '';
+    this.slug = '';
   }
 
   static get properties() {
@@ -18,12 +19,13 @@ export class NasaImage extends LitElement {
         description: { type: String },
         created: { type: String },
         lastUpdated: { type: String },
-        logo: { type: String }
+        logo: { type: String },
+        slug: { type: String },
     };
   }
 
   static get styles() {
-    return css`
+    return [super.styles, css`
     
       .image {
         display: inline-flex;
@@ -39,8 +41,8 @@ export class NasaImage extends LitElement {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         cursor: pointer;
         outline: none;
-        /* Height for golden ratio (approx. 1.618) */
-        height: 512px;
+        min-height: 500px;
+        margin: 10px;
       }
 
       .image:hover img {
@@ -66,6 +68,25 @@ export class NasaImage extends LitElement {
         transition: transform 0.3s ease;
       }
 
+      .image:hover {
+        background-color: #FA8072;
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .card:hover img {
+        transform: scale()(1.05);
+      }
+
+      .info {
+        margin-top: 10px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        text-align: center;
+        line-height: 1.5;
+      }
+
       .secondary {
         font-size: 16px;
         color: #555;
@@ -74,30 +95,37 @@ export class NasaImage extends LitElement {
         text-align: center;
       }
 
-    `;
+      .metadata {
+        font-size: 14px;
+        color: #777;
+        margin-top: 12px;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+    `];
   }
 
   render() {
-    const createdDate = new Date(parseInt(this.created) * 1000).toLocaleDateString();
     const updatedDate = new Date(parseInt(this.lastUpdated) * 1000).toLocaleDateString();
     
     if (this.logo == '') {
-      this.logo = "/files/HAX.psu%20World%20changer-circle1.png";
-  }
-  
+      this.logo = "https://haxtheweb.org/files/HAX.psu%20World%20changer-circle1.png";
+    }
+
     return html`
       <div
         class="image"
         tabindex="0"
         @click="${this.openSlug}"
         @keyup="${this.onKeyup}"
-      >
+        >
         <div class="image-container">
-          <img src="https://haxtheweb.org/${this.logo}" alt="${this.title}" />
+          <img src="${this.logo}" alt="${this.title}" />
         </div>
         <div class="info">${this.title}</div>
         <div class="secondary">${this.description}</div>
-        <div class="metadata">Created: ${createdDate}</div>
+        ${this.created != '' ? html`<div class="metadata">Created: ${this.created}</div>` : ``}
         <div class="metadata">Updated: ${updatedDate}</div>
       </div>
     `;
@@ -105,13 +133,19 @@ export class NasaImage extends LitElement {
 
   onKeyup(e) {
     if (e.key === 'Enter') {
-      this.openInNewTab();
       this.openSlug();
+      this.openInNewTab();
     }
+  }
+
+  openSlug() {
+    const url = `https://haxtheweb.org/${this.slug}`;
+    window.open(url, '_blank');
   }
 
   static get tag() {
     return "nasa-image";
   }
 }
+
 customElements.define(NasaImage.tag, NasaImage);

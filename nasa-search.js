@@ -29,11 +29,6 @@ export class NasaSearch extends LitElement {
         display: block;
       }
 
-      :host([loading]) .results {
-        opacity: 0.1;
-        display: none;
-        display: block;
-      }
       .results {
         visibility: visible;
         height: 100%;
@@ -46,41 +41,86 @@ export class NasaSearch extends LitElement {
         margin: 16px;
         padding: 16px;
         background-color: lightblue;
+        border-radius: 4px;
       }
+
+      details.no-arrow summary {
+        list-style: none;
+      }
+
       summary {
         font-size: 24px;
         padding: 8px;
         color: white;
         font-size: 42px;
       }
+
       input {
         font-size: 20px;
         line-height: 40px;
         width: 100%;
       }
+
+      details button {
+        margin-top: 10px;
+        padding: 10px;
+        font-size: 16px;
+        background-color: #FA8072;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      
     `;
   }
 
 
   render() {
     return html`
-      <h2>${this.title}</h2>
-      <details open>
-        <summary>Search the HaxWeb!</summary>
-      <div>
-        <input id="input" placeholder="Search" @input="${this.inputChanged}" />
-      </div>
+      <h2>
+        ${this.title}
+      </h2>
+      <details class="no-arrow" open>
+      <summary>${this.title ? '' : 'Search the HaxWeb!'}</summary>
+          <div>
+            <input 
+              id="input" 
+              class="search-input"
+              placeholder="Search" 
+              @input="${this.inputChanged}" 
+            />
+          </div>
+          ${this.title === 'Enter Website Location' ? html`
+        <div>
+          <button @click="${this.onButtonClick}">Search</button>
+        </div>
+      ` : ''}
       </details>
       <div class="results">
-        ${this.items.map((item, index) => html`
-          <nasa-image
-            title="${item.data?.[0]?.title || ''}"
-            logo="${item.links?.[0]?.href || ''}" 
-          ></nasa-image>
-        `)}
+      ${this.items.map((item) => {
+        const created = item.metadata ? new Date(parseInt(item.metadata.created) * 1000).toLocaleDateString() : '';
+        const updated = item.metadata ? new Date(parseInt(item.metadata.updated) * 1000).toLocaleDateString() : '';
+        const logo = item.metadata && item.metadata.files && item.metadata.files[0] 
+          ? `https://haxtheweb.org/${item.metadata.files[0].url}` 
+          : '';
+
+          return html`
+            <nasa-image
+              created="${created}"
+              lastUpdated="${updated}"
+              title="${item.title}"
+              description="${item.description}"
+              logo="${logo}"
+              slug="${item.slug}"
+            ></nasa-image>
+          `;
+        })}
       </div>
     `;
   }
+
 
   inputChanged(e) {
     this.value = this.shadowRoot.querySelector('#input').value;
@@ -112,10 +152,11 @@ export class NasaSearch extends LitElement {
           );
         }
 
-        //this.updateGlobalHexColor(data);
         this.loading = false;
       });
   }
+
+  
 
   static get tag() {
     return 'nasa-search';
