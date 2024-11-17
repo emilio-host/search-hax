@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 
-export class NasaImage extends DDDSuper (LitElement) {
+export class HaxImage extends DDDSuper(LitElement) {
 
   constructor() {
     super();
@@ -21,6 +21,7 @@ export class NasaImage extends DDDSuper (LitElement) {
         lastUpdated: { type: String },
         logo: { type: String },
         slug: { type: String },
+        base: { type: String },
     };
   }
 
@@ -33,11 +34,11 @@ export class NasaImage extends DDDSuper (LitElement) {
         align-items: center;
         width: 100%;
         max-width: 320px;
-        border-radius: 12px;
+        border-radius: var(--ddd-radius-lg);
         overflow: hidden;
-        padding: 16px;
+        padding: 10px;
         background-color: #f9f9f9;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--ddd-boxShadow-xl);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         cursor: pointer;
         outline: none;
@@ -50,9 +51,9 @@ export class NasaImage extends DDDSuper (LitElement) {
       }
 
       .image-container {
-        width: 100%;
+        width: flex;
         overflow: hidden;
-        border-radius: 8px;
+        border-radius: var(--ddd-radius-lg);
         background-color: #ddd;
         display: flex;
         align-items: center;
@@ -64,18 +65,18 @@ export class NasaImage extends DDDSuper (LitElement) {
         width: 70%;
         height: auto;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: var(--ddd-radius-lg);
         transition: transform 0.3s ease;
       }
 
       .image:hover {
-        background-color: #FA8072;
-        transform: translateY(-5px);
+        background-color: var(--ddd-theme-default-discoveryCoral);
+        transform: translateY(-3px);
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       }
 
       .card:hover img {
-        transform: scale()(1.05);
+        transform: scale(1.0);
       }
 
       .info {
@@ -139,13 +140,13 @@ export class NasaImage extends DDDSuper (LitElement) {
   }
 
   openSlug() {
-    const url = `https://haxtheweb.org/${this.slug}`;
-    window.open(url, '_blank');
+    const url = this.slug ? `${this.base || ''}/${this.slug}` : this.base;
+    if (url) window.open(url, '_blank');
   }
 
   static get tag() {
-    return "nasa-image";
+    return "hax-image";
   }
 }
 
-customElements.define(NasaImage.tag, NasaImage);
+customElements.define(HaxImage.tag, HaxImage);

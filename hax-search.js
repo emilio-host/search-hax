@@ -1,8 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
-import "./nasa-image.js";
+import "./hax-image.js";
 
-export class NasaSearch extends LitElement {
+export class HaxSearch extends LitElement {
 
   constructor() {
     super();
@@ -10,7 +10,8 @@ export class NasaSearch extends LitElement {
     this.title = '';
     this.loading = false;
     this.items = [];
-    this.jsonUrl = 'https://haxtheweb.org/site.json';
+    this.jsonUrl = '';
+    this.errorMessage = '';
   }
 
   static get properties() {
@@ -20,6 +21,7 @@ export class NasaSearch extends LitElement {
       items: { type: Array, },
       value: { type: String },
       jsonUrl: { type: String },
+      errorMessage: { type: String },
     };
   }
 
@@ -29,18 +31,21 @@ export class NasaSearch extends LitElement {
         display: block;
       }
 
+      h2 {
+        margin-left: 16px;
+      }
+
       .results {
-        visibility: visible;
-        height: 100%;
-        opacity: 1;
-        transition-delay: .5s;
-        transition: .5s all ease-in-out;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        max-width: 1200px; 
       }
 
       details {
         margin: 16px;
         padding: 16px;
-        background-color: lightblue;
+        background-color: var(--ddd-theme-default-pughBlue);
         border-radius: 4px;
       }
 
@@ -50,32 +55,36 @@ export class NasaSearch extends LitElement {
 
       summary {
         font-size: 24px;
-        padding: 8px;
+        padding: 8px 16px;
         color: white;
         font-size: 42px;
       }
 
       input {
         font-size: 20px;
-        line-height: 40px;
+        line-height: var(--ddd-lh-auto);
         width: 100%;
       }
 
-      details button {
+      button {
         margin-top: 10px;
         padding: 10px;
         font-size: 16px;
-        background-color: #FA8072;
+        background-color: var(--ddd-theme-default-discoveryCoral);
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
       }
 
+      .error {
+        color: red;
+        margin-top: 10px;
+      }
+
       
     `;
   }
-
 
   render() {
     return html`
@@ -90,14 +99,18 @@ export class NasaSearch extends LitElement {
               class="search-input"
               placeholder="Search" 
               @input="${this.inputChanged}" 
+              @keydown="${this.handleKeyPress}"
             />
           </div>
-          ${this.title === 'Enter Website Location' ? html`
+          ${this.title === 'Enter URL Location' ? html`
         <div>
-          <button @click="${this.onButtonClick}">Search</button>
+          <button @click="${this.loadData}">Analyze</button>
         </div>
       ` : ''}
       </details>
+      ${this.errorMessage ? html`<div class="error">${this.errorMessage}</div>` 
+      : ''} 
+
       <div class="results">
       ${this.items.map((item) => {
         const created = item.metadata ? new Date(parseInt(item.metadata.created) * 1000).toLocaleDateString() : '';
@@ -106,60 +119,76 @@ export class NasaSearch extends LitElement {
           ? `https://haxtheweb.org/${item.metadata.files[0].url}` 
           : '';
 
+          const slug = item.slug || '';
+
           return html`
-            <nasa-image
+            <hax-image
               created="${created}"
               lastUpdated="${updated}"
               title="${item.title}"
               description="${item.description}"
               logo="${logo}"
               slug="${item.slug}"
-            ></nasa-image>
+              base="${this.value}"
+            ></hax-image>
           `;
         })}
       </div>
     `;
   }
 
-
+  
   inputChanged(e) {
-    this.value = this.shadowRoot.querySelector('#input').value;
-  }
-  // life cycle will run when anything defined in `properties` is modified
-  updated(changedProperties) {
-    // see if value changes from user input and is not empty
-    if (changedProperties.has('value') && this.value) {
-      this.updateResults(this.value);
-    }
-    else if (changedProperties.has('value') && !this.value) {
-      this.items = [];
-    }
-    // @debugging purposes only
-    if (changedProperties.has('items') && this.items.length > 0) {
-      console.log(this.items);
+    this.value = e.target.value;
+    // Updates the jsonUrl to append `/site.json` automatically
+    if (this.value && !this.value.endsWith('/site.json')) {
+      this.jsonUrl = `${this.value}/site.json`;
     }
   }
 
-  updateResults(value) {
+
+  handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      this.loadData();
+    }
+  }
+
+
+  loadData() {
+    if (!this.jsonUrl || this.jsonUrl.trim() === '') {
+      this.errorMessage = 'Please enter a valid URL.';
+      return;
+    }
+  
     this.loading = true;
-    fetch(this.jsonUrl) // Use the jsonUrl property
-      .then(response => response.ok ? response.json() : {})
+    this.errorMessage = '';
+    this.items = [];
+  
+    fetch(this.jsonUrl)
+      .then(response => response.ok ? response.json() : Promise.reject('Invalid response'))
       .then(data => {
         if (data && Array.isArray(data.items)) {
-          this.items = data.items.filter(item => 
-            item?.title?.toLowerCase().includes(value.toLowerCase()) ||
-            item?.description?.toLowerCase().includes(value.toLowerCase())
-          );
+          this.items = data.items.map(item => {
+            if (!item.slug) {
+              item.slug = ''; 
+            }
+            return item;
+          });
+        } else {
+          throw new Error('Invalid data format');
         }
-
+        this.loading = false;
+      })
+      .catch((error) => {
+        this.errorMessage = `Error: ${error.message || 'Invalid response'}`;
+        this.items = [];
         this.loading = false;
       });
   }
 
   
-
   static get tag() {
-    return 'nasa-search';
+    return 'hax-search';
   }
 }
-customElements.define(NasaSearch.tag, NasaSearch);
+customElements.define(HaxSearch.tag, HaxSearch);
